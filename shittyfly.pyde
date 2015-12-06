@@ -141,6 +141,11 @@ class Game:
     
     def follow(self):
         self.printMarkers()
+        
+        for sticky in self.stickies:
+            if(self.flyCollides(sticky)):
+                print("Collision")
+                return False
 
         if self.fly.pointsCrossed < len(self.points)-1:
             #print(self.fly.pathGradients)
@@ -223,6 +228,23 @@ class Game:
             distanceList.append(math.sqrt(abs(cord[0]-mouseX)**2+abs(cord[1]-mouseY)**2))
         
         return min(distanceList),squareCordsList[distanceList.index(min(distanceList))]
+    
+    def flyCollides(self,sticky):
+        stickyX = sticky[0] + self.a/2
+        stickyY = sticky[1] + self.a/2
+        circleDistanceX = abs(self.fly.x - stickyX)
+        circleDistanceY = abs(self.fly.y - stickyY)
+        
+        if (circleDistanceX > (self.a/2 + self.fly.a/2)): return False
+        if (circleDistanceY > (self.a/2 + self.fly.a/2)): return False
+        
+        if (circleDistanceX <= (self.a/2)): return True;  
+        if (circleDistanceY <= (self.a/2)): return True; 
+        
+        cornerDistance_sq = (circleDistanceX - self.a/2)**2 + (circleDistanceY - self.a/2)**2
+    
+        return (cornerDistance_sq <= ((self.fly.a/2)**2));
+        
         
         
 game = Game(1200,760,20)
@@ -238,6 +260,8 @@ def draw():
         game.deploy()
     elif game.state == "follow":
         game.follow()
+    elif game.state == "gameover":
+        print("Game Over")
     
 def mousePressed():
     distance, nearestCords = game.getNearestCords()
