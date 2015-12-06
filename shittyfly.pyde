@@ -6,9 +6,27 @@ class Utilities:
         slope = ((y2-y1)/float(x2-x1))
         print(slope)
         return slope
+    
+    def intersects(self,circle,rectangle):
+        # Get the centre of the rectangle
+        rectangleX = rectangle.x + rectangle.w/2
+        rectangleY = rectangle.y + rectangle.h/2
+        
+        circleDistanceX = abs(circle.x - rectangleX)
+        circleDistanceY = abs(circle.y - rectangleY)
+        
+        if (circleDistanceX > (rectangle.w/2 + circle.r)): return False
+        if (circleDistanceY > (rectangle.h/2 + circle.r)): return False
+        
+        if (circleDistanceX <= (rectangle.w/2)): return True;  
+        if (circleDistanceY <= (rectangle.h/2)): return True; 
+        
+        cornerDistance_sq = (circleDistanceX - rectangle.w/2)**2 + (circleDistanceY - rectangle.h/2)**2
+    
+        return (cornerDistance_sq <= (circle.r**2));
 
 utilities = Utilities()
-     
+
 class Point:
     def __init__(self,x,y): # x and y coordinates
         self.x = x
@@ -17,7 +35,7 @@ class Point:
         
     def display(self):
         fill(255,0,0) #RED color pointer
-        ellipse(self.x,self.y, 2*self.r, 2*self.r) 
+        ellipse(self.x,self.y,2*self.r,2*self.r) 
 
 class Sticky:
     def __init__(self,x,y,a):
@@ -25,25 +43,30 @@ class Sticky:
         self.y = y # y-cordinatie of top-left point
         self.a = a # width of the sticky
         
+        # width and height defined for purpose of collision
+        self.w = a
+        self.h = a
+        
     def display(self):
         fill(0,255,0)
         rect(self.x,self.y,self.a,self.a)
     
 class Poo:
-    def __init__(self,x,y,a):
+    def __init__(self,x,y,w,h):
         self.x = x
         self.y = y
-        self.a = a
+        self.w = w
+        self.h = h
     
     def display(self):
         fill(0,255,0)
-        ellipse(self.x,self.y,self.a,self.a)
+        rect(self.x,self.y,self.w,self.h)
 
 class Fly:
-    def __init__(self,x,y,a):
+    def __init__(self,x,y,r):
         self.x = x
         self.y = y
-        self.a = a
+        self.r = r
         self.vx = 3
         self.vy = 3
         
@@ -54,7 +77,7 @@ class Fly:
     
     def display(self):
         fill(0,255,0)
-        ellipse(self.x,self.y,self.a,self.a)
+        ellipse(self.x,self.y,2*self.r,2*self.r)
         
     def calculateGradients(self):
         for i in range(len(game.points)-1):
@@ -82,13 +105,12 @@ class Game:
         self.margin = 50
         
         # Poo and Housefly markers
-        self.flyThickness = 60
-        self.fly = Fly(self.w-(self.margin+self.flyThickness/2),self.h-(self.margin+self.flyThickness/2),self.flyThickness)
-        self.pooThickness = 100
-        self.poo = Poo(self.margin+self.pooThickness/2,self.margin+self.pooThickness/2,self.pooThickness)
+        radius = 30
+        self.fly = Fly(self.w-(self.margin+radius),self.h-(self.margin+radius),radius)
+        self.poo = Poo(self.margin,self.margin,self.a*4,self.a*3)
         
         # Adding the centre of Housefly as first point in the Points List
-        self.points.append(Point(self.w-(self.margin+self.flyThickness/2),self.h-(self.margin+self.flyThickness/2)))
+        self.points.append(Point(self.w-(self.margin+radius),self.h-(self.margin+radius)))
         
         # Load stickies data
         self.loadData()
@@ -150,8 +172,12 @@ class Game:
     def follow(self):
         self.printMarkers()
         
+        if(utilities.intersects(self.fly,self.poo)):
+                print("Collision")
+                return False
+        
         for sticky in self.stickies:
-            if(self.flyCollides(sticky)):
+            if(utilities.intersects(self.fly,sticky)):
                 print("Collision")
                 return False
 
