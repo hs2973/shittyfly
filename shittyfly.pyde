@@ -1,7 +1,5 @@
 import math, os
-
 path = os.getcwd()
-
 
 class Utilities:
     def gradient(self,x1,y1,x2,y2):
@@ -75,7 +73,7 @@ class Game:
         self.level = 1
         
         # Number of points (smells) allowed
-        self.pointsLimit = 2
+        self.pointsLimit = 4
         self.points = []
         
         self.stickies = []
@@ -95,7 +93,7 @@ class Game:
         # Load stickies data
         self.loadData()
                  
-        #minimum distance (in pixels) from the mouse pointer for the circle dot to show
+        # Minimum distance (in pixels) from the mouse pointer for the circle dot to show
         self.minDistance = 5
     
     def loadData(self):  
@@ -108,7 +106,7 @@ class Game:
         background(255)
         stroke(238,238,238)
         
-        #Horizontal and Vertical gridlines
+        # Horizontal and Vertical gridlines
         for i in range(self.a,self.w,self.a):
             line(i, 0, i, self.h)
             
