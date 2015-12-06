@@ -2,11 +2,24 @@ import math, os
 
 path = os.getcwd()
 
-class Utilities(self):
-    def gradient(x1,y1,x2,y2):
+
+class Utilities:
+    def gradient(self,x1,y1,x2,y2):
         slope = ((y2-y1)/float(x2-x1))
         print(slope)
         return slope
+
+utilities = Utilities()
+     
+class Point:
+    def __init__(self,x,y): # x and y coordinates
+        self.x = x
+        self.y = y
+        self.r = 5
+        
+    def display(self):
+        fill(255,0,0) #RED color pointer
+        ellipse(self.x,self.y, 2*self.r, 2*self.r) 
 
 class Sticky:
     def __init__(self,x,y,a):
@@ -15,6 +28,7 @@ class Sticky:
         self.a = a # width of the sticky
         
     def display(self):
+        fill(0,255,0)
         rect(self.x,self.y,self.a,self.a)
     
 class Poo:
@@ -24,6 +38,7 @@ class Poo:
         self.a = a
     
     def display(self):
+        fill(0,255,0)
         ellipse(self.x,self.y,self.a,self.a)
 
 class Fly:
@@ -40,6 +55,7 @@ class Fly:
         self.speedChange = "increase"
     
     def display(self):
+        fill(0,255,0)
         ellipse(self.x,self.y,self.a,self.a)
         
     def calculateGradients(self):
@@ -47,56 +63,46 @@ class Fly:
             point1 = game.points[i]
             point2 = game.points[i+1]
             print(point1, point2)
-            self.pathGradients.append(gradient(point1[0],point1[1],point2[0],point2[1]))
-    
-    def calculateMilestones(self):
-        for i in range(len(game.points)-1):
-            point1 = game.points[i]
-            point2 = game.points[i+1]
-            
-            self.milestones.append(math.sqrt(abs(point2[0]-point1[0])**2+abs(point2[1]-point1[1])**2)//3)
-            
+            self.pathGradients.append(utilities.gradient(point1.x,point1.y,point2.x,point2.y))
         
 class Game:
-    def __init__(self,w,h,a): #width, height, thickness
+    def __init__(self,w,h,a): #width, height, thickness for the grid
         self.w = w
         self.h = h
         self.a = a
         
         self.state = "deploy"
         self.level = 1
-     
-        self.pointsLimit = 4
+        
+        # Number of points (smells) allowed
+        self.pointsLimit = 2
         self.points = []
+        
         self.stickies = []
         
-        #Poo and Housefly markers
+        # Margin for the fly and poo markers
         self.margin = 50
+        
+        # Poo and Housefly markers
         self.flyThickness = 60
         self.fly = Fly(self.w-(self.margin+self.flyThickness/2),self.h-(self.margin+self.flyThickness/2),self.flyThickness)
         self.pooThickness = 100
         self.poo = Poo(self.margin+self.pooThickness/2,self.margin+self.pooThickness/2,self.pooThickness)
         
-        #Adding the centre of Housefly as first point in the Points List
-        self.points.append([self.w-(self.margin+self.flyThickness/2),self.h-(self.margin+self.flyThickness/2)])
+        # Adding the centre of Housefly as first point in the Points List
+        self.points.append(Point(self.w-(self.margin+self.flyThickness/2),self.h-(self.margin+self.flyThickness/2)))
         
+        # Load stickies data
         self.loadData()
                  
-        #minimum distance from the mouse pointer for the circle dot to show
+        #minimum distance (in pixels) from the mouse pointer for the circle dot to show
         self.minDistance = 5
     
-    def loadData(self):
-        #points = open(path+'/points'+str(self.level)+".txt")
-        #for point in points:
-        #    cords = point.strip().split(',')
-        #    self.points.append([int(cords[0]),int(cords[1])])
-        
-        #points.close()
-            
+    def loadData(self):  
         stickies = open(path+'/stickies'+str(self.level)+".txt")
         for sticky in stickies:
             cords = sticky.strip().split(',')
-            self.stickies.append([int(cords[0]),int(cords[1])])
+            self.stickies.append(Sticky(int(cords[0]),int(cords[1]),self.a))
         
     def printBoard(self):
         background(255)
@@ -115,17 +121,15 @@ class Game:
         self.fly.display()
         self.poo.display()
         
-        fill(255,0,0) #RED color pointer
         for point in self.points:
-            ellipse(point[0],point[1], 10, 10)
+            point.display()
             
-        fill(0,255,0)
-        for cords in self.stickies:
-            rect(cords[0],cords[1], game.a, game.a)
+        for sticky in self.stickies:
+            sticky.display()
         
         stroke(100,100,100)
         for i in range(len(self.points)-1):
-            line(self.points[i][0], self.points[i][1], self.points[i+1][0], self.points[i+1][1])
+            line(self.points[i].x, self.points[i].y, self.points[i+1].x, self.points[i+1].y)
     
     def deploy(self):
         self.printMarkers()
@@ -143,7 +147,6 @@ class Game:
             game.state = "follow"
             if len(self.fly.pathGradients) == 0:
                 self.fly.calculateGradients()
-                #self.fly.calculateMilestones()
                 print(self.fly.pathGradients)
     
     def follow(self):
@@ -155,12 +158,11 @@ class Game:
                 return False
 
         if self.fly.pointsCrossed < len(self.points)-1:
-            #print(self.fly.pathGradients)
             incrementX = abs(math.cos(math.atan(self.fly.pathGradients[self.fly.pointsCrossed])) * self.fly.vx)
             incrementY = abs(math.sin(math.atan(self.fly.pathGradients[self.fly.pointsCrossed])) * self.fly.vy)
             
-            x2minusx1 = game.points[self.fly.pointsCrossed+1][0]-game.points[self.fly.pointsCrossed][0]
-            y2minusy1 = game.points[self.fly.pointsCrossed+1][1]-game.points[self.fly.pointsCrossed][1]
+            x2minusx1 = game.points[self.fly.pointsCrossed+1].x-game.points[self.fly.pointsCrossed].x
+            y2minusy1 = game.points[self.fly.pointsCrossed+1].y-game.points[self.fly.pointsCrossed].y
             self.fly.x += x2minusx1/abs(x2minusx1)*incrementX
             self.fly.y += y2minusy1/abs(y2minusy1)*incrementY
             
@@ -175,17 +177,17 @@ class Game:
             
             if x2minusx1 > 0:
                 if y2minusy1 > 0:
-                    if self.fly.x >= game.points[self.fly.pointsCrossed+1][0] and self.fly.y >= game.points[self.fly.pointsCrossed+1][1]:
+                    if self.fly.x >= game.points[self.fly.pointsCrossed+1].x and self.fly.y >= game.points[self.fly.pointsCrossed+1].y:
                         decreaseSpeed = True
                 else:
-                    if self.fly.x >= game.points[self.fly.pointsCrossed+1][0] and self.fly.y <= game.points[self.fly.pointsCrossed+1][1]:
+                    if self.fly.x >= game.points[self.fly.pointsCrossed+1].x and self.fly.y <= game.points[self.fly.pointsCrossed+1].y:
                         decreaseSpeed = True
             else:
                 if y2minusy1 > 0:
-                    if self.fly.x <= game.points[self.fly.pointsCrossed+1][0] and self.fly.y >= game.points[self.fly.pointsCrossed+1][1]:
+                    if self.fly.x <= game.points[self.fly.pointsCrossed+1].x and self.fly.y >= game.points[self.fly.pointsCrossed+1].y:
                         decreaseSpeed = True
                 else:
-                    if self.fly.x <= game.points[self.fly.pointsCrossed+1][0] and self.fly.y <= game.points[self.fly.pointsCrossed+1][1]:
+                    if self.fly.x <= game.points[self.fly.pointsCrossed+1].x and self.fly.y <= game.points[self.fly.pointsCrossed+1].y:
                         decreaseSpeed = True
                     
             if decreaseSpeed:
@@ -200,25 +202,10 @@ class Game:
                 self.fly.vy = 3
                 
                 if self.fly.pointsCrossed < len(self.fly.pathGradients):
-                    game.points[self.fly.pointsCrossed][0] = self.fly.x
-                    game.points[self.fly.pointsCrossed][1] = self.fly.y
-                    self.fly.pathGradients[self.fly.pointsCrossed] = gradient(self.fly.x,self.fly.y,game.points[self.fly.pointsCrossed+1][0],game.points[self.fly.pointsCrossed+1][1])
-                
-                #self.fly.x = game.points[self.fly.pointsCrossed][0]
-                #self.fly.y = game.points[self.fly.pointsCrossed][1]
+                    game.points[self.fly.pointsCrossed].x = self.fly.x
+                    game.points[self.fly.pointsCrossed].y = self.fly.y
+                    self.fly.pathGradients[self.fly.pointsCrossed] = utilities.gradient(self.fly.x,self.fly.y,game.points[self.fly.pointsCrossed+1].x,game.points[self.fly.pointsCrossed+1].y)
             
-            #self.fly.milestonesCount += 1
-            
-            #if(self.fly.milestonesCount >= self.fly.milestones[self.fly.pointsCrossed]):
-            #    self.fly.pointsCrossed += 1
-            #    self.fly.x = game.points[self.fly.pointsCrossed][0]
-            #    self.fly.y = game.points[self.fly.pointsCrossed][1]
-            #    self.fly.milestonesCount = 0
-            #    print(self.fly.pointsCrossed)
-            
-
-            
-
     def getNearestCords(self):
         vectorList = [[0,0],[1,0],[1,1],[0,1]]
         squareCordsList = []
@@ -237,8 +224,8 @@ class Game:
         return min(distanceList),squareCordsList[distanceList.index(min(distanceList))]
     
     def flyCollides(self,sticky):
-        stickyX = sticky[0] + self.a/2
-        stickyY = sticky[1] + self.a/2
+        stickyX = sticky.x + self.a/2
+        stickyY = sticky.y + self.a/2
         circleDistanceX = abs(self.fly.x - stickyX)
         circleDistanceY = abs(self.fly.y - stickyY)
         
@@ -251,8 +238,6 @@ class Game:
         cornerDistance_sq = (circleDistanceX - self.a/2)**2 + (circleDistanceY - self.a/2)**2
     
         return (cornerDistance_sq <= ((self.fly.a/2)**2));
-        
-        
         
 game = Game(1200,760,20)
     
@@ -273,4 +258,4 @@ def draw():
 def mousePressed():
     distance, nearestCords = game.getNearestCords()
     if(distance <= game.minDistance and len(game.points)<=game.pointsLimit):
-        game.points.append(nearestCords)
+        game.points.append(Point(nearestCords[0], nearestCords[1]))
