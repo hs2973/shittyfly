@@ -2,11 +2,21 @@ import math, os
 
 path = os.getcwd()
 
-def gradient(x1,y1,x2,y2):
-    slope = ((y2-y1)/float(x2-x1))
-    print(slope)
-    return slope
+class Utilities(self):
+    def gradient(x1,y1,x2,y2):
+        slope = ((y2-y1)/float(x2-x1))
+        print(slope)
+        return slope
 
+class Sticky:
+    def __init__(self,x,y,a):
+        self.x = x # x-cordinatie of top-left point
+        self.y = y # y-cordinatie of top-left point
+        self.a = a # width of the sticky
+        
+    def display(self):
+        rect(self.x,self.y,self.a,self.a)
+    
 class Poo:
     def __init__(self,x,y,a):
         self.x = x
@@ -28,9 +38,6 @@ class Fly:
         self.pathGradients = []
         
         self.speedChange = "increase"
-        
-        self.milestones = []
-        self.milestonesCount = 0
     
     def display(self):
         ellipse(self.x,self.y,self.a,self.a)
