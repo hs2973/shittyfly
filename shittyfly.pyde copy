@@ -42,9 +42,6 @@ class Sticky:
         self.x = x # x-cordinatie of top-left point
         self.y = y # y-cordinatie of top-left point
         self.a = a # width of the sticky
-        self.imgPath = path + "/images/sticky.png"
-        
-        self.img = loadImage(self.imgPath)
         
         # width and height defined for purpose of collision
         self.w = a
@@ -52,21 +49,17 @@ class Sticky:
         
     def display(self):
         fill(0,255,0)
-        image(self.img,self.x,self.y)
-
+        rect(self.x,self.y,self.a,self.a)
+    
 class Poo:
     def __init__(self,x,y,w,h):
         self.x = x
         self.y = y
         self.w = w
         self.h = h
-        self.img = loadImage(path + "/images/poo.png")
-        self.img.resize(80,60)
     
     def display(self):
-        noFill()
-        noStroke()
-        image(self.img, self.x, self.y)
+        fill(0,255,0)
         rect(self.x,self.y,self.w,self.h)
 
 class Fly:
@@ -77,34 +70,15 @@ class Fly:
         self.vx = 3
         self.vy = 3
         
-        self.img = loadImage(path + "/images/flySprite.png")
-        self.frame = 0
-        self.frames = 4
-        self.frameWidth = self.img.width/self.frames
-        self.frameHeight = self.img.height
-        
-        self.imgDead = loadImage(path + "/images/flyDead.png")
-        
         self.pointsCrossed = 0
         self.pathGradients = []
         
         self.speedChange = "increase"
     
     def display(self):
-        noFill()
-        noStroke()
+        fill(0,255,0)
         ellipse(self.x,self.y,2*self.r,2*self.r)
         
-        if game.state == "gameover":
-            image(self.imgDead,self.x-self.r-10,self.y-self.r-5)
-        else:
-            if self.frame == self.frames-1:
-                self.frame = 0
-            else:
-                self.frame += 1
-                
-            image(self.img,self.x-self.r-10,self.y-self.r-5,self.frameWidth,self.frameHeight,self.frame*self.frameWidth,0,(self.frame+1)*self.frameWidth,self.frameHeight)
-            
     def calculateGradients(self):
         for i in range(len(game.points)-1):
             point1 = game.points[i]
@@ -118,7 +92,7 @@ class Game:
         self.h = h
         self.a = a
         
-        self.state = "menu"
+        self.state = "deploy"
         self.level = 1
         
         # Number of points (smells) allowed
@@ -131,25 +105,18 @@ class Game:
         self.margin = 50
         
         # Poo and Housefly markers
-        self.flyRadius = 30
-        self.fly = Fly(self.w-(self.margin+self.flyRadius),self.h-(self.margin+self.flyRadius),self.flyRadius)
+        radius = 30
+        self.fly = Fly(self.w-(self.margin+radius),self.h-(self.margin+radius),radius)
         self.poo = Poo(self.margin,self.margin,self.a*4,self.a*3)
         
         # Adding the centre of Housefly as first point in the Points List
-        self.points.append(Point(self.w-(self.margin+self.flyRadius),self.h-(self.margin+self.flyRadius)))
+        self.points.append(Point(self.w-(self.margin+radius),self.h-(self.margin+radius)))
         
         # Load stickies data
         self.loadData()
                  
         # Minimum distance (in pixels) from the mouse pointer for the circle dot to show
         self.minDistance = 5
-        
-    def reset(self, nextState):
-        self.fly = Fly(self.w-(self.margin+self.flyRadius),self.h-(self.margin+self.flyRadius),self.flyRadius)
-        self.points=[]
-        self.points.append(Point(self.w-(self.margin+self.flyRadius),self.h-(self.margin+self.flyRadius)))
-        self.poo = Poo(self.margin,self.margin,self.a*4,self.a*3)
-        self.state = nextState
     
     def loadData(self):  
         stickies = open(path+'/stickies'+str(self.level)+".txt")
@@ -167,10 +134,6 @@ class Game:
             
         for i in range(self.a,self.h,self.a):
             line(0, i, self.w, i)
-            
-        textSize(20)
-        s = "Smells left:" + str(self.pointsLimit - len(self.points)+1)
-        text(s, 1000, 50)
     
     def printMarkers(self):
         self.printBoard()
@@ -210,12 +173,12 @@ class Game:
         self.printMarkers()
         
         if(utilities.intersects(self.fly,self.poo)):
-                game.state = "gamewon"
+                print("Collision")
                 return False
         
         for sticky in self.stickies:
             if(utilities.intersects(self.fly,sticky)):
-                game.state = "gameover"
+                print("Collision")
                 return False
 
         if self.fly.pointsCrossed < len(self.points)-1:
@@ -309,57 +272,14 @@ def setup():
     game.printBoard()
     
 def draw(): 
-    if game.state == "menu":
-        background(255)
-        fill(0)
-        textSize(50)
-        text("Menu", game.w/2-65, game.h/2)
-        textSize(30)
-        fill(255)
-        rect(game.w/2-75, game.h/2+75,150,50)
-        fill(0)
-        text("Play", game.w/2-30, game.h/2+100)
-        fill(255)
-        rect(game.w/2-75, game.h/2+150,150,50)
-        fill(0)
-        text("Quit", game.w/2-30, game.h/2+175)
-    elif game.state == "deploy":
+    if game.state == "deploy":
         game.deploy()
     elif game.state == "follow":
         game.follow()
-    elif game.state == "gameover": #Gives the Game Over title if collision is detected
-        game.printMarkers()
-        
+    elif game.state == "gameover":
         print("Game Over")
-        fill(0)
-        textSize(50)
-        text("GAME OVER", game.w/2-150, game.h/2)
-        textSize(30)
-        fill(255)
-        rect(game.w/2-75, game.h/2+75,150,50)
-        fill(0)
-        text("Try again", game.w/2-70, game.h/2+100)
-        fill(255)
-        rect(game.w/2-95, game.h/2+150,190,50)
-        fill(0)
-        text("Go to menu", game.w/2-85, game.h/2+175)
     
 def mousePressed():
     distance, nearestCords = game.getNearestCords()
     if(distance <= game.minDistance and len(game.points)<=game.pointsLimit):
         game.points.append(Point(nearestCords[0], nearestCords[1]))
-        
-    if game.state == "menu":
-        if game.w/2-75 <= mouseX <= game.w/2+75 and game.h/2+75 <= mouseY <= game.h/2+125: # From menu to starting game (PLAY!)
-            game.reset("deploy")
-        elif game.w/2-75 <= mouseX <= game.w/2+75 and game.h/2+150 <= mouseY <= game.h/2+200:
-            print("quit")
-            exit()
-    elif game.state == "gameover":
-        if game.w/2-75 <= mouseX <= game.w/2+75 and game.h/2+75 <= mouseY <= game.h/2+125: # From game over to reseting the game (try again)
-            game.reset("deploy")
-            print(game.state)
-        elif game.w/2-95 <= mouseX <= game.w/2+95 and game.h/2+150 <= mouseY <= game.h/2+200: # From game over screen to menu (Go to menu)
-            background(255)
-            game.reset("menu")
-        
