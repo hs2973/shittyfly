@@ -42,6 +42,9 @@ class Sticky:
         self.x = x # x-cordinatie of top-left point
         self.y = y # y-cordinatie of top-left point
         self.a = a # width of the sticky
+        self.imgPath = path + "/images/sticky.png"
+        
+        self.img = loadImage(self.imgPath)
         
         # width and height defined for purpose of collision
         self.w = a
@@ -49,17 +52,21 @@ class Sticky:
         
     def display(self):
         fill(0,255,0)
-        rect(self.x,self.y,self.a,self.a)
-    
+        image(self.img,self.x,self.y)
+
 class Poo:
     def __init__(self,x,y,w,h):
         self.x = x
         self.y = y
         self.w = w
         self.h = h
+        self.img = loadImage(path + "/images/poo.png")
+        self.img.resize(80,60)
     
     def display(self):
-        fill(0,255,0)
+        noFill()
+        noStroke()
+        image(self.img, self.x, self.y)
         rect(self.x,self.y,self.w,self.h)
 
 class Fly:
