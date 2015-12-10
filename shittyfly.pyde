@@ -33,8 +33,22 @@ class Point:
         self.y = y
         self.r = 5
         
+        self.imgSmell = loadImage(path + "/images/smellSprite.png")
+        self.frame = 0
+        self.frames = 5
+        self.frameWidth = self.imgSmell.width/self.frames
+        self.frameHeight = self.imgSmell.height
+        
     def display(self):
         fill(255,0,0) #RED color pointer
+        
+        if self.frame == self.frames-1:
+            self.frame = 0
+        else:
+            self.frame += 1
+            
+        image(self.imgSmell,self.x-(self.frameWidth/2),self.y-(self.frameHeight),self.frameWidth,self.frameHeight,self.frame*self.frameWidth,0,(self.frame+1)*self.frameWidth,self.frameHeight)
+
         ellipse(self.x,self.y,2*self.r,2*self.r) 
 
 class Sticky:
@@ -76,14 +90,17 @@ class Fly:
         self.r = r
         self.vx = 3
         self.vy = 3
+        self.lastV = -1
         
         self.img = loadImage(path + "/images/flySprite.png")
+        self.imgR = loadImage(path + "/images/flySpriteR.png")
         self.frame = 0
-        self.frames = 4
+        self.frames = 6
         self.frameWidth = self.img.width/self.frames
         self.frameHeight = self.img.height
         
         self.imgDead = loadImage(path + "/images/flyDead.png")
+        self.imgDeadR = loadImage(path + "/images/flyDeadR.png")
         
         self.pointsCrossed = 0
         self.pathGradients = []
@@ -96,14 +113,21 @@ class Fly:
         ellipse(self.x,self.y,2*self.r,2*self.r)
         
         if game.state == "gameover":
-            image(self.imgDead,self.x-self.r-10,self.y-self.r-5)
+            if self.lastV == 1:
+                image(self.imgDeadR,self.x-self.r-10,self.y-self.r-5)
+            else:
+                image(self.imgDead,self.x-self.r-10,self.y-self.r-5)
         else:
             if self.frame == self.frames-1:
                 self.frame = 0
             else:
                 self.frame += 1
                 
-            image(self.img,self.x-self.r-10,self.y-self.r-5,self.frameWidth,self.frameHeight,self.frame*self.frameWidth,0,(self.frame+1)*self.frameWidth,self.frameHeight)
+            if self.lastV == 1:
+                image(self.imgR,self.x-self.r-10,self.y-self.r-5,self.frameWidth,self.frameHeight,self.frame*self.frameWidth,0,(self.frame+1)*self.frameWidth,self.frameHeight)
+            else:
+                image(self.img,self.x-self.r-10,self.y-self.r-5,self.frameWidth,self.frameHeight,self.frame*self.frameWidth,0,(self.frame+1)*self.frameWidth,self.frameHeight)
+        
             
     def calculateGradients(self):
         for i in range(len(game.points)-1):
@@ -174,20 +198,20 @@ class Game:
     
     def printMarkers(self):
         self.printBoard()
-        
-        self.fly.display()
-        self.poo.display()
-        
-        for point in self.points:
-            point.display()
             
         for sticky in self.stickies:
             sticky.display()
+   
+        for point in self.points:
+            point.display()
         
         stroke(100,100,100)
         for i in range(len(self.points)-1):
             line(self.points[i].x, self.points[i].y, self.points[i+1].x, self.points[i+1].y)
-    
+        
+        self.poo.display()
+        self.fly.display()
+        
     def deploy(self):
         self.printMarkers()
         
@@ -237,6 +261,7 @@ class Game:
             decreaseSpeed = False
             
             if x2minusx1 > 0:
+                self.fly.lastV=1
                 if y2minusy1 > 0:
                     if self.fly.x >= game.points[self.fly.pointsCrossed+1].x and self.fly.y >= game.points[self.fly.pointsCrossed+1].y:
                         decreaseSpeed = True
@@ -244,6 +269,7 @@ class Game:
                     if self.fly.x >= game.points[self.fly.pointsCrossed+1].x and self.fly.y <= game.points[self.fly.pointsCrossed+1].y:
                         decreaseSpeed = True
             else:
+                self.fly.lastV=-1
                 if y2minusy1 > 0:
                     if self.fly.x <= game.points[self.fly.pointsCrossed+1].x and self.fly.y >= game.points[self.fly.pointsCrossed+1].y:
                         decreaseSpeed = True
@@ -343,6 +369,30 @@ def draw():
         rect(game.w/2-95, game.h/2+150,190,50)
         fill(0)
         text("Go to menu", game.w/2-85, game.h/2+175)
+    elif game.state == "gamewon":
+        if game.level < 3:
+            print("Game Won")
+            fill(0)
+            textSize(50)
+            text("CONGRATULATIONS", game.w/2-250, game.h/2)
+            textSize(30)
+            fill(255)
+            rect(game.w/2-75, game.h/2+75,150,50)
+            fill(0)
+            text("Next level", game.w/2-70, game.h/2+100)
+            fill(255)
+            rect(game.w/2-95, game.h/2+150,190,50)
+            fill(0)
+            text("Go to menu", game.w/2-85, game.h/2+175)
+        else:
+            fill(0)
+            textSize(50)
+            text("CONGRATULATIONS YOU WON", game.w/2-350, game.h/2)
+            textSize(30)
+            fill(255)
+            rect(game.w/2-95, game.h/2+150,190,50)
+            fill(0)
+            text("Go to menu", game.w/2-85, game.h/2+175)
     
 def mousePressed():
     distance, nearestCords = game.getNearestCords()
@@ -360,6 +410,21 @@ def mousePressed():
             game.reset("deploy")
             print(game.state)
         elif game.w/2-95 <= mouseX <= game.w/2+95 and game.h/2+150 <= mouseY <= game.h/2+200: # From game over screen to menu (Go to menu)
+            background(255)
+            game.reset("menu")
+    
+    elif game.state == "gamewon" and game.level < 3:
+        if game.w/2-75 <= mouseX <= game.w/2+75 and game.h/2+75 <= mouseY <= game.h/2+125: # Going to next level(Next level)
+            game.level = game.level+1
+            game.reset("deploy")
+            
+            print(game.state)
+            print(game.level)
+        elif game.w/2-95 <= mouseX <= game.w/2+95 and game.h/2+150 <= mouseY <= game.h/2+200: # From game over screen to menu (Go to menu)
+            background(255)
+            game.reset("menu")
+    elif game.state == "gamewon" and game.level >= 3:
+        if game.w/2-95 <= mouseX <= game.w/2+95 and game.h/2+150 <= mouseY <= game.h/2+200: # From game over screen to menu (Go to menu)
             background(255)
             game.reset("menu")
         
