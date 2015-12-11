@@ -79,9 +79,10 @@ class Poo:
     
     def display(self):
         noFill()
-        noStroke()
+        stroke(255,0,0)
+        ellipse(self.x+self.img.width/2,self.y+self.img.height/2+5,90,90)
         image(self.img, self.x, self.y)
-        rect(self.x,self.y,self.w,self.h)
+        
 
 class Fly:
     def __init__(self,x,y,r):
