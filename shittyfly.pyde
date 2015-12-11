@@ -1,3 +1,5 @@
+add_library('minim')
+minim = Minim(this)
 import math, os
 path = os.getcwd()
 
@@ -18,12 +20,22 @@ class Utilities:
         if (circleDistanceX > (rectangle.w/2 + circle.r)): return False
         if (circleDistanceY > (rectangle.h/2 + circle.r)): return False
         
-        if (circleDistanceX <= (rectangle.w/2)): return True;  
-        if (circleDistanceY <= (rectangle.h/2)): return True; 
+        if (circleDistanceX <= (rectangle.w/2)): return True  
+        if (circleDistanceY <= (rectangle.h/2)): return True
         
         cornerDistance_sq = (circleDistanceX - rectangle.w/2)**2 + (circleDistanceY - rectangle.h/2)**2
     
-        return (cornerDistance_sq <= (circle.r**2));
+        return (cornerDistance_sq <= (circle.r**2))
+    
+    def outOfBounds(self, circle):
+        circleDistanceX = abs(circle.x + circle.r)
+        circleDistanceY = abs(circle.y + circle.r)
+        if 0 >= circle.x-circle.r or circleDistanceX >= game.w:
+            return False
+        elif 0 >= circle.y-circle.r or circleDistanceY >= game.h:
+            return False
+        else:
+            return True
 
 utilities = Utilities()
 
@@ -40,7 +52,7 @@ class Point:
         self.frameHeight = self.imgSmell.height
         
     def display(self):
-        fill(255,0,0) #RED color pointer
+        fill(0,255,0) 
         
         if self.frame == self.frames-1:
             self.frame = 0
@@ -70,20 +82,40 @@ class Sticky:
 
 class Poo:
     def __init__(self,x,y,w,h):
-        self.x = x
-        self.y = y
+        self.x = x+50
+        self.y = y+50
         self.w = w
         self.h = h
+        
+        self.moonImg = loadImage(path + "/images/full-moon.png")
+        self.moonImg.resize(140,140)
+        
         self.img = loadImage(path + "/images/poo.png")
         self.img.resize(80,60)
     
     def display(self):
         noFill()
         stroke(255,0,0)
-        ellipse(self.x+self.img.width/2,self.y+self.img.height/2+5,90,90)
+        centerX = self.x+self.img.width/2
+        centerY = self.y+self.img.height/2
+        image(self.moonImg, centerX - self.moonImg.width/2, centerY - self.moonImg.height/2)
+        #ellipse(self.x+self.img.width/2,self.y+self.img.height/2+5,90,90)
         image(self.img, self.x, self.y)
         
-
+    def intersects(self,circle):
+        centerX = self.x+self.img.width/2
+        centerY = self.y+self.img.height/2
+        
+        circleDistanceX = abs(centerX - circle.x)
+        circleDistanceY = abs(centerY - circle.y)
+        
+        distance = (circleDistanceX**2 + circleDistanceY**2)**0.5
+        
+        if (distance <= (self.moonImg.width/2 + circle.r - 10)): 
+            return True
+        else:
+            return False
+        
 class Fly:
     def __init__(self,x,y,r):
         self.x = x
@@ -146,6 +178,8 @@ class Game:
         self.state = "menu"
         self.level = 1
         
+        self.music = minim.loadFile(path + "/music/moon.mp3")
+        
         # Number of points (smells) allowed
         self.pointsLimit = 4
         self.points = []
@@ -169,15 +203,21 @@ class Game:
         # Minimum distance (in pixels) from the mouse pointer for the circle dot to show
         self.minDistance = 5
         
+        self.backgroundImg = loadImage(path+"/images/sky.jpg")
+        self.backgroundImg.resize(self.w,self.h)
+        
     def reset(self, nextState):
         self.fly = Fly(self.w-(self.margin+self.flyRadius),self.h-(self.margin+self.flyRadius),self.flyRadius)
         self.points=[]
         self.points.append(Point(self.w-(self.margin+self.flyRadius),self.h-(self.margin+self.flyRadius)))
         self.poo = Poo(self.margin,self.margin,self.a*4,self.a*3)
         self.state = nextState
+        self.stickies = []
+        self.loadData()
     
     def loadData(self):  
         stickies = open(path+'/stickies'+str(self.level)+".txt")
+        self.pointsLimit = int(stickies.readline())
         for sticky in stickies:
             cords = sticky.strip().split(',')
             self.stickies.append(Sticky(int(cords[0]),int(cords[1]),self.a))
@@ -186,6 +226,10 @@ class Game:
         background(255)
         stroke(238,238,238)
         
+        #image(self.backgroundImg,0,0)
+        
+        #noStroke()
+        
         # Horizontal and Vertical gridlines
         for i in range(self.a,self.w,self.a):
             line(i, 0, i, self.h)
@@ -193,12 +237,12 @@ class Game:
         for i in range(self.a,self.h,self.a):
             line(0, i, self.w, i)
             
+    def printMarkers(self):
+        self.printBoard()
+        
         textSize(20)
         s = "Smells left:" + str(self.pointsLimit - len(self.points)+1)
         text(s, 1000, 50)
-    
-    def printMarkers(self):
-        self.printBoard()
             
         for sticky in self.stickies:
             sticky.display()
@@ -206,7 +250,7 @@ class Game:
         for point in self.points:
             point.display()
         
-        stroke(100,100,100)
+        stroke(255,0,0)
         for i in range(len(self.points)-1):
             line(self.points[i].x, self.points[i].y, self.points[i+1].x, self.points[i+1].y)
         
@@ -215,6 +259,7 @@ class Game:
         
     def deploy(self):
         self.printMarkers()
+        fill(255,0,0)
         
         if(len(game.points)<=game.pointsLimit):
             distance, nearestCords = self.getNearestCords()
@@ -234,9 +279,17 @@ class Game:
     def follow(self):
         self.printMarkers()
         
-        if(utilities.intersects(self.fly,self.poo)):
-                game.state = "gamewon"
-                return False
+        if(self.poo.intersects(self.fly)):
+            game.state = "gamewon"
+            return False
+            
+        #if (utilities.outOfBounds(self.fly)) == False:
+            #game.state = "gameover"
+            #return False
+        
+        if self.fly.vx == 3 and self.fly.pointsCrossed >= len(self.points)-1:#Check whether fly stopped and it is over - then u lot. vx == 3 because of inital speed being 3
+            game.state = "gameover"
+            return False
         
         for sticky in self.stickies:
             if(utilities.intersects(self.fly,sticky)):
@@ -310,22 +363,6 @@ class Game:
             distanceList.append(math.sqrt(abs(cord[0]-mouseX)**2+abs(cord[1]-mouseY)**2))
         
         return min(distanceList),squareCordsList[distanceList.index(min(distanceList))]
-    
-    def flyCollides(self,sticky):
-        stickyX = sticky.x + self.a/2
-        stickyY = sticky.y + self.a/2
-        circleDistanceX = abs(self.fly.x - stickyX)
-        circleDistanceY = abs(self.fly.y - stickyY)
-        
-        if (circleDistanceX > (self.a/2 + self.fly.a/2)): return False
-        if (circleDistanceY > (self.a/2 + self.fly.a/2)): return False
-        
-        if (circleDistanceX <= (self.a/2)): return True;  
-        if (circleDistanceY <= (self.a/2)): return True; 
-        
-        cornerDistance_sq = (circleDistanceX - self.a/2)**2 + (circleDistanceY - self.a/2)**2
-    
-        return (cornerDistance_sq <= ((self.fly.a/2)**2));
         
 game = Game(1200,760,20)
     
@@ -333,6 +370,7 @@ def setup():
     size(game.w, game.h)
     stroke(0)
     frameRate(20)
+    
     game.printBoard()
     
 def draw(): 
@@ -362,11 +400,11 @@ def draw():
         textSize(50)
         text("GAME OVER", game.w/2-150, game.h/2)
         textSize(30)
-        fill(255)
+        noFill()
         rect(game.w/2-75, game.h/2+75,150,50)
         fill(0)
         text("Try again", game.w/2-70, game.h/2+100)
-        fill(255)
+        noFill()
         rect(game.w/2-95, game.h/2+150,190,50)
         fill(0)
         text("Go to menu", game.w/2-85, game.h/2+175)
@@ -402,6 +440,7 @@ def mousePressed():
         
     if game.state == "menu":
         if game.w/2-75 <= mouseX <= game.w/2+75 and game.h/2+75 <= mouseY <= game.h/2+125: # From menu to starting game (PLAY!)
+            game.music.play()
             game.reset("deploy")
         elif game.w/2-75 <= mouseX <= game.w/2+75 and game.h/2+150 <= mouseY <= game.h/2+200:
             print("quit")
