@@ -5,7 +5,10 @@ path = os.getcwd()
 
 class Utilities:
     def gradient(self,x1,y1,x2,y2):
-        slope = ((y2-y1)/float(x2-x1))
+        if float(x2-x1) == 0:
+            slope = 999999999
+        else:
+            slope = ((y2-y1)/float(x2-x1))
         print(slope)
         return slope
     
@@ -142,14 +145,15 @@ class Fly:
     
     def display(self):
         noFill()
-        noStroke()
+        stroke(0,255,0)
         ellipse(self.x,self.y,2*self.r,2*self.r)
+        noStroke()
         
         if game.state == "gameover":
             if self.lastV == 1:
-                image(self.imgDeadR,self.x-self.r-10,self.y-self.r-5)
+                image(self.imgDeadR,self.x-self.r-15,self.y-self.r-10)
             else:
-                image(self.imgDead,self.x-self.r-10,self.y-self.r-5)
+                image(self.imgDead,self.x-self.r-15,self.y-self.r-10)
         else:
             if self.frame == self.frames-1:
                 self.frame = 0
@@ -157,9 +161,10 @@ class Fly:
                 self.frame += 1
                 
             if self.lastV == 1:
-                image(self.imgR,self.x-self.r-10,self.y-self.r-5,self.frameWidth,self.frameHeight,self.frame*self.frameWidth,0,(self.frame+1)*self.frameWidth,self.frameHeight)
+                image(self.imgR,self.x-self.r-15,self.y-self.r-10,self.frameWidth,self.frameHeight,self.frame*self.frameWidth,0,(self.frame+1)*self.frameWidth,self.frameHeight)
             else:
-                image(self.img,self.x-self.r-10,self.y-self.r-5,self.frameWidth,self.frameHeight,self.frame*self.frameWidth,0,(self.frame+1)*self.frameWidth,self.frameHeight)
+                image(self.img,self.x-self.r-15,self.y-self.r-10,self.frameWidth,self.frameHeight,self.frame*self.frameWidth,0,(self.frame+1)*self.frameWidth,self.frameHeight)
+        
         
             
     def calculateGradients(self):
@@ -190,7 +195,7 @@ class Game:
         self.margin = 50
         
         # Poo and Housefly markers
-        self.flyRadius = 30
+        self.flyRadius = 25
         self.fly = Fly(self.w-(self.margin+self.flyRadius),self.h-(self.margin+self.flyRadius),self.flyRadius)
         self.poo = Poo(self.margin,self.margin,self.a*4,self.a*3)
         
