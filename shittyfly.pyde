@@ -247,7 +247,7 @@ class Game:
         
         textSize(20)
         s = "Smells left:" + str(self.pointsLimit - len(self.points)+1)
-        text(s, 1000, 50)
+        text(s, 950, 50)
             
         for sticky in self.stickies:
             sticky.display()
@@ -276,10 +276,10 @@ class Game:
                 cursor(ARROW)
         else:
             cursor(ARROW)
+            if len(game.fly.pathGradients) == 0:
+                game.fly.calculateGradients()
             game.state = "follow"
-            if len(self.fly.pathGradients) == 0:
-                self.fly.calculateGradients()
-                print(self.fly.pathGradients)
+            print(self.fly.pathGradients)
     
     def follow(self):
         self.printMarkers()
@@ -395,11 +395,14 @@ def draw():
         text("Quit", game.w/2-30, game.h/2+175)
     elif game.state == "deploy":
         game.deploy()
+        textSize(30) 
+        noFill()
+        stroke(255)
+        text("Go!", 1100, 50)       
     elif game.state == "follow":
         game.follow()
     elif game.state == "gameover": #Gives the Game Over title if collision is detected
         game.printMarkers()
-        
         print("Game Over")
         fill(0)
         textSize(50)
@@ -450,6 +453,14 @@ def mousePressed():
         elif game.w/2-75 <= mouseX <= game.w/2+75 and game.h/2+150 <= mouseY <= game.h/2+200:
             print("quit")
             exit()
+            
+    elif game.state == "deploy":
+        if 1075<=mouseX<=game.w and 22<=mouseY<=60:
+            if len(game.fly.pathGradients) == 0:
+                game.fly.calculateGradients()
+            game.state = "follow"
+            
+        
     elif game.state == "gameover":
         if game.w/2-75 <= mouseX <= game.w/2+75 and game.h/2+75 <= mouseY <= game.h/2+125: # From game over to reseting the game (try again)
             game.reset("deploy")
