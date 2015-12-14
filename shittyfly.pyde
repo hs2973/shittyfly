@@ -3,6 +3,7 @@ minim = Minim(this)
 import math, os
 path = os.getcwd()
 
+
 class Utilities:
     def gradient(self,x1,y1,x2,y2):
         if float(x2-x1) == 0:
@@ -188,6 +189,7 @@ class Game:
         # Number of points (smells) allowed
         self.pointsLimit = 4
         self.points = []
+        self.pointsInitial = []
         
         self.stickies = []
         
@@ -252,7 +254,7 @@ class Game:
         for sticky in self.stickies:
             sticky.display()
    
-        for point in self.points:
+        for point in self.pointsInitial:
             point.display()
         
         stroke(255,0,0)
@@ -446,6 +448,7 @@ def mousePressed():
     if(distance <= game.minDistance and len(game.points)<=game.pointsLimit):
         game.points.append(Point(nearestCords[0], nearestCords[1]))
         
+        
     if game.state == "menu":
         if game.w/2-75 <= mouseX <= game.w/2+75 and game.h/2+75 <= mouseY <= game.h/2+125: # From menu to starting game (PLAY!)
             game.music.play()
@@ -456,6 +459,8 @@ def mousePressed():
             
     elif game.state == "deploy":
         if 1075<=mouseX<=game.w and 22<=mouseY<=60:
+            if len(game.points)-1<=game.pointsLimit and game.state == "deploy":
+                game.pointsInitial = [] + game.points
             if len(game.fly.pathGradients) == 0:
                 game.fly.calculateGradients()
             game.state = "follow"
